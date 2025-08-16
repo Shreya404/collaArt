@@ -57,7 +57,6 @@ function Dock({
       style={{
         height: panelHeight,
         scrollbarWidth: 'none',
-        
       }}
       className='mx-2 flex max-w-full items-end overflow-x-auto'>
       <motion.div
@@ -111,7 +110,7 @@ function DockItem({
       onHoverEnd={() => isHovered.set(0)}
       onFocus={() => isHovered.set(1)}
       onBlur={() => isHovered.set(0)}
-      className={cn('relative inline-flex items-center justify-center hover:bg-violet-200 rounded-xl py-2', className)}
+      className={cn('relative inline-flex items-center justify-center hover:bg-violet-200 rounded-2xl py-2.5', className)}
       tabIndex={0}
       role='button'
       aria-haspopup='true'

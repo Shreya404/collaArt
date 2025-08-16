@@ -75,7 +75,7 @@ const Toolbar = ({
                   setEraserSize(Number(e.target.value));
                   setTool('eraser'); // ensure tool stays eraser on change
                 }}
-                className="absolute left-1/2 top-full mt-2 -translate-x-1/2 w-28 cursor-pointer rounded bg-gray-200 z-50 shadow"
+                className="absolute left-1/2 top-full -mt-1 -translate-x-1/2 w-28 cursor-pointer rounded bg-gray-200 z-100 shadow"
                 title="Eraser Size"
                 style={{
     accentColor: "#B57ADE" // green-600, or use your preferred color hex
