@@ -7,6 +7,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173", // Local dev
+  "https://collaart.vercel.app",
   process.env.FRONTEND_URL // e.g., https://collaart-frontend-production.up.railway.app
 ];
 
