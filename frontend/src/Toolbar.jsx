@@ -22,8 +22,8 @@ const Toolbar = ({
   const showEraserSlider = tool === 'eraser';
 
   return (
-    <div className="w-full flex gap-60 mt-5  ">
-      <h2 className="text-4xl font-light mt-5 ml-5 font-borel select-none">Colla<span className='text-violet-500'>Art</span></h2>
+    <div className="w-full flex mt-5 justify-center relative">
+      <h2 className="text-4xl font-light mt-5 ml-5 font-borel select-none fixed left-0">Colla<span className='text-violet-500'>Art</span></h2>
       <Dock className="items-center bg-gradient-to-br from-blue-200 to-violet-400 px-8  ">
 
 

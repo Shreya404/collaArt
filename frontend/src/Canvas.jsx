@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -33,7 +32,22 @@ export default function Canvas({
     redrawAll();
   }, [shapes, color]);
 
-  // Point-to-segment helper for path selection
+  useEffect(() => {
+  const handleResize = () => {
+    const canvas = canvasRef.current;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    redrawAll();
+  };
+  window.addEventListener('resize', handleResize);
+  // Initial sizing for first mount as well
+  handleResize();
+  return () => {
+    window.removeEventListener('resize', handleResize);
+  };
+}, [shapes, color]); // Add anything else that should trigger redraw here
+
+  // Helper for line selection (used in both mouse and touch)
   const isPointNearLine = (px, py, x1, y1, x2, y2, distance = 8) => {
     const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
     const dot = A * C + B * D;
@@ -52,7 +66,7 @@ export default function Canvas({
     return Math.sqrt(dx * dx + dy * dy) < distance;
   };
 
-  // Main redraw: draw all shapes in order
+  // Draw all shapes
   const redrawAll = () => {
     const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -97,7 +111,7 @@ export default function Canvas({
     }
   };
 
-  // Select shape logic (rect/circle/image/path/text)
+  // Shape selection for mouse
   const handleSelect = e => {
     if (tool !== "select" || !drawingEnabled) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -105,7 +119,6 @@ export default function Canvas({
     const y = e.clientY - rect.top;
 
     for (const shape of shapes.slice().reverse()) {
-      // Rect/Image selection with bbox (handles negative dimensions)
       if (
         (shape.type === "rect" || shape.type === "image") &&
         (() => {
@@ -119,7 +132,6 @@ export default function Canvas({
         setSelectedShapeId(shape.id);
         return;
       }
-      // Circle selection
       if (
         shape.type === "circle" &&
         Math.hypot(x - shape.x, y - shape.y) <= Math.sqrt(shape.w ** 2 + shape.h ** 2)
@@ -127,7 +139,6 @@ export default function Canvas({
         setSelectedShapeId(shape.id);
         return;
       }
-      // Path selection (freehand)
       if (shape.type === "path" && shape.points.length > 1) {
         for (let i = 0; i < shape.points.length - 1; i++) {
           const pt1 = shape.points[i], pt2 = shape.points[i + 1];
@@ -137,7 +148,6 @@ export default function Canvas({
           }
         }
       }
-      // Text selection
       if (shape.type === "text") {
         const fontSize = shape.fontSize || 22;
         const margin = 4;
@@ -155,15 +165,70 @@ export default function Canvas({
     setSelectedShapeId(null);
   };
 
+  // ==== Touch selection for "select" tool ====
+  const handleSelectTouch = (e) => {
+    if (tool !== "select" || !drawingEnabled) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    for (const shape of shapes.slice().reverse()) {
+      if (
+        (shape.type === "rect" || shape.type === "image") &&
+        (() => {
+          const x0 = Math.min(shape.x, shape.x + shape.w);
+          const x1 = Math.max(shape.x, shape.x + shape.w);
+          const y0 = Math.min(shape.y, shape.y + shape.h);
+          const y1 = Math.max(shape.y, shape.y + shape.h);
+          return x >= x0 && x <= x1 && y >= y0 && y <= y1;
+        })()
+      ) {
+        setSelectedShapeId(shape.id);
+        return;
+      }
+      if (
+        shape.type === "circle" &&
+        Math.hypot(x - shape.x, y - shape.y) <= Math.sqrt(shape.w ** 2 + shape.h ** 2)
+      ) {
+        setSelectedShapeId(shape.id);
+        return;
+      }
+      if (shape.type === "path" && shape.points.length > 1) {
+        for (let i = 0; i < shape.points.length - 1; i++) {
+          const pt1 = shape.points[i], pt2 = shape.points[i + 1];
+          if (isPointNearLine(x, y, pt1.x, pt1.y, pt2.x, pt2.y, 8)) {
+            setSelectedShapeId(shape.id);
+            return;
+          }
+        }
+      }
+      if (shape.type === "text") {
+        const fontSize = shape.fontSize || 22;
+        const margin = 4;
+        if (
+          x > shape.x - margin &&
+          x < shape.x + (shape.text?.length || 1) * fontSize * 0.6 + margin &&
+          y > shape.y - margin &&
+          y < shape.y + fontSize + margin
+        ) {
+          setSelectedShapeId(shape.id);
+          return;
+        }
+      }
+    }
+    setSelectedShapeId(null);
+  };
+
+  // Mouse drawing
   const startDrawing = e => {
     if (!drawingEnabled) return;
     const { offsetX: x, offsetY: y } = e.nativeEvent;
-   if (tool === "text") {
-  setTextInput({ x, y, value: "" });
-   setTimeout(() => setTextInput({ x, y, value: "" }), 0);
-  console.log("TEXT INPUT SET:", x, y);
-  return;
-}
+    if (tool === "text") {
+      setTextInput({ x, y, value: "" });
+      setTimeout(() => setTextInput({ x, y, value: "" }), 0);
+      return;
+    }
     if (tool === "pencil" || tool === "eraser") {
       setIsDrawing(true);
       setCurrentPoints([{ x, y }]);
@@ -177,7 +242,7 @@ export default function Canvas({
     if (!isDrawing || !drawingEnabled) return;
     const { offsetX: x, offsetY: y } = e.nativeEvent;
     if (tool === "pencil" || tool === "eraser") {
-      setCurrentPoints((pts) => [...pts, { x, y }]);
+      setCurrentPoints(pts => [...pts, { x, y }]);
       redrawAll();
       const ctx = ctxRef.current;
       ctx.strokeStyle = tool === "eraser" ? "#fff" : color;
@@ -242,6 +307,135 @@ export default function Canvas({
       setCurrentPoints([]);
     }
   };
+
+  // ==== TOUCH SUPPORT START ====
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    const getTouchPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    };
+
+    const startTouch = (e) => {
+      if (!drawingEnabled) return;
+      e.preventDefault();
+
+      if (tool === "select") {
+        handleSelectTouch(e);
+        return;
+      }
+
+      const { x, y } = getTouchPos(e);
+      if (tool === "text") {
+        setTextInput({ x, y, value: "" });
+        setTimeout(() => setTextInput({ x, y, value: "" }), 0);
+        return;
+      }
+      if (tool === "pencil" || tool === "eraser") {
+        setIsDrawing(true);
+        setCurrentPoints([{ x, y }]);
+      } else if (tool === "rect" || tool === "circle") {
+        setStartPoint({ x, y });
+        setIsDrawing(true);
+      }
+    };
+
+    const moveTouch = (e) => {
+      if (!isDrawing || !drawingEnabled) return;
+      e.preventDefault();
+      const { x, y } = getTouchPos(e);
+      if (tool === "pencil" || tool === "eraser") {
+        setCurrentPoints(pts => [...pts, { x, y }]);
+        redrawAll();
+        const ctx = ctxRef.current;
+        ctx.strokeStyle = tool === "eraser" ? "#fff" : color;
+        ctx.lineWidth = tool === "eraser" ? eraserSize : 2;
+        ctx.beginPath();
+        currentPoints.concat({ x, y }).forEach((pt, i) => {
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.stroke();
+      } else if (tool === "rect" || tool === "circle") {
+        redrawAll();
+        const ctx = ctxRef.current;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        if (tool === "rect") {
+          ctx.strokeRect(startPoint.x, startPoint.y, x - startPoint.x, y - startPoint.y);
+        } else if (tool === "circle") {
+          ctx.beginPath();
+          ctx.arc(
+            startPoint.x,
+            startPoint.y,
+            Math.sqrt((x - startPoint.x) ** 2 + (y - startPoint.y) ** 2),
+            0,
+            2 * Math.PI
+          );
+          ctx.stroke();
+        }
+      }
+    };
+
+    const endTouch = (e) => {
+      if (!isDrawing || !drawingEnabled) return;
+      e.preventDefault();
+      let x, y;
+      if (e.changedTouches && e.changedTouches[0]) {
+        const rect = canvas.getBoundingClientRect();
+        x = e.changedTouches.clientX - rect.left;
+        y = e.changedTouches.clientY - rect.top;
+      } else {
+        return;
+      }
+
+      setIsDrawing(false);
+      if (tool === "rect" || tool === "circle") {
+        const newShape = {
+          id: uuidv4(),
+          type: tool,
+          x: startPoint.x,
+          y: startPoint.y,
+          w: x - startPoint.x,
+          h: y - startPoint.y,
+          color
+        };
+        const newShapes = [...shapes, newShape];
+        setShapes(newShapes);
+        saveSnapshot(newShapes);
+        setStartPoint(null);
+      }
+      if (tool === "pencil" || tool === "eraser") {
+        const newShape = {
+          id: uuidv4(),
+          type: "path",
+          points: currentPoints,
+          color: tool === "eraser" ? "#fff" : color,
+          width: tool === "eraser" ? eraserSize : 2
+        };
+        const newShapes = [...shapes, newShape];
+        setShapes(newShapes);
+        saveSnapshot(newShapes);
+        setCurrentPoints([]);
+      }
+    };
+
+    canvas.addEventListener('touchstart', startTouch, { passive: false });
+    canvas.addEventListener('touchmove', moveTouch, { passive: false });
+    canvas.addEventListener('touchend', endTouch);
+
+    return () => {
+      canvas.removeEventListener('touchstart', startTouch);
+      canvas.removeEventListener('touchmove', moveTouch);
+      canvas.removeEventListener('touchend', endTouch);
+    };
+  }, [tool, drawingEnabled, currentPoints, isDrawing, startPoint, color, eraserSize, shapes]);
+  // ==== TOUCH SUPPORT END ====
 
   return (
     <canvas
