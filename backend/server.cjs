@@ -3,13 +3,12 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 
-// --- CHANGE THIS IN PRODUCTION ---
-const FRONTEND_ORIGINS = [
-  "http://localhost:5173",           // Vite dev server
-  "https://your-vercel-app.vercel.app"  // <-- REPLACE with your Vercel domain after deploying frontend
-];
-
 const app = express();
+
+const FRONTEND_ORIGINS = [
+  "http://localhost:5173",             // Vite dev server URL for local testing
+  process.env.FRONTEND_URL || "*"      // Production frontend URL (set in Railway vars), fallback to '*'
+];
 
 app.use(cors({
   origin: FRONTEND_ORIGINS,
@@ -29,13 +28,11 @@ const io = new Server(server, {
 let shapes = []; // Shared whiteboard state
 
 io.on('connection', (socket) => {
-  // Send current shapes to new client
   socket.emit('shapes:init', shapes);
 
-  // When client updates shapes
   socket.on('shapes:update', (newShapes) => {
     shapes = newShapes;
-    socket.broadcast.emit('shapes:update', shapes); // broadcast to all others
+    socket.broadcast.emit('shapes:update', shapes);
   });
 
   socket.on('disconnect', () => {});
