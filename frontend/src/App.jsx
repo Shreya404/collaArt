@@ -4,7 +4,7 @@ import Canvas from "./Canvas";
 import { Rnd } from "react-rnd";
 import { v4 as uuidv4 } from "uuid";
 import { io } from "socket.io-client";
-const socket = io("http://localhost:3001");
+const socket = io("https://collaart-production.up.railway.app");
 
 export default function App() {
   const [tool, setTool] = useState("pencil");
