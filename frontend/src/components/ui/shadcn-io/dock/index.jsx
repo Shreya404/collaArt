@@ -1,5 +1,11 @@
-'use client';
-import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+"use client";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
 import {
   Children,
   cloneElement,
@@ -9,8 +15,8 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
-import { cn } from '@/lib/utils';
+} from "react";
+import { cn } from "@/lib/utils";
 
 const DOCK_HEIGHT = 100;
 const DEFAULT_MAGNIFICATION = 80;
@@ -26,7 +32,7 @@ function DockProvider({ children, value }) {
 function useDock() {
   const context = useContext(DockContext);
   if (!context) {
-    throw new Error('useDock must be used within an DockProvider');
+    throw new Error("useDock must be used within an DockProvider");
   }
   return context;
 }
@@ -41,7 +47,7 @@ function Dock({
   magnification = DEFAULT_MAGNIFICATION,
   distance = DEFAULT_DISTANCE,
   panelHeight = DEFAULT_PANEL_HEIGHT,
-  orientation = 'horizontal',
+  orientation = "horizontal",
 }) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
@@ -53,15 +59,15 @@ function Dock({
   const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
   const height = useSpring(heightRow, spring);
 
-  const isVertical = orientation === 'vertical';
+  const isVertical = orientation === "vertical";
 
   return (
     <motion.div
       style={isVertical ? { width: panelHeight } : { height: panelHeight }}
       className={cn(
         isVertical
-          ? 'flex flex-col h-auto items-start'
-          : 'mx-2 flex max-w-full items-end overflow-x-auto',
+          ? "flex flex-col h-auto items-start"
+          : "mx-2 flex max-w-full items-end overflow-x-auto"
       )}
     >
       <motion.div
@@ -76,15 +82,17 @@ function Dock({
         }}
         className={cn(
           isVertical
-            ? 'fixed left-0 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 rounded-none shadow-xl bg-gradient-to-br from-blue-200 to-violet-400 dark:bg-neutral-950/90 z-50 py-2 px-1 border-r border-gray-300 rounded-2xl ml-2'
-            : 'mx-auto flex flex-row w-fit gap-8 rounded-2xl bg-gray-50 px-4 dark:bg-neutral-900',
+            ? "fixed left-0 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 rounded-none shadow-xl bg-gradient-to-br from-blue-200 to-violet-400 dark:bg-neutral-950/90 z-50 py-2 px-1 border-r border-gray-300 rounded-2xl ml-2"
+            : "mx-auto flex flex-row w-fit gap-8 rounded-2xl bg-gray-50 px-4 dark:bg-neutral-900",
           className
         )}
         style={isVertical ? { width: panelHeight } : { height: panelHeight }}
-        role='toolbar'
-        aria-label='Application dock'
+        role="toolbar"
+        aria-label="Application dock"
       >
-        <DockProvider value={{ mouseX, spring, distance, magnification, isVertical }}>
+        <DockProvider
+          value={{ mouseX, spring, distance, magnification, isVertical }}
+        >
           {children}
         </DockProvider>
       </motion.div>
@@ -99,7 +107,12 @@ function DockItem({ children, className }) {
   const isHovered = useMotionValue(0);
 
   const mouseDistance = useTransform(mouseX, (val) => {
-    const domRect = ref.current?.getBoundingClientRect() ?? { x: 0, y: 0, width: 0, height: 0 };
+    const domRect = ref.current?.getBoundingClientRect() ?? {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    };
     // vertical: use y axis, else x axis
     return isVertical
       ? val - domRect.y - domRect.height / 2
@@ -118,32 +131,34 @@ function DockItem({ children, className }) {
   return (
     <motion.div
       ref={ref}
-      style={isVertical ? { height: width, width: '100%' } : { width }}
+      style={isVertical ? { height: width, width: "100%" } : { width }}
       onHoverStart={() => isHovered.set(1)}
       onHoverEnd={() => isHovered.set(0)}
       onFocus={() => isHovered.set(1)}
       onBlur={() => isHovered.set(0)}
       className={cn(
-        'relative inline-flex items-center justify-center rounded-2xl py-2.5 transition-colors hover:bg-violet-200/50 dark:hover:bg-violet-950/60',
-        isVertical ? 'my-1 w-full' : '',
+        "relative inline-flex items-center justify-center rounded-2xl py-2.5 transition-colors hover:bg-violet-200/50 dark:hover:bg-violet-950/60",
+        isVertical ? "my-1 w-full" : "",
         className
       )}
       tabIndex={0}
-      role='button'
-      aria-haspopup='true'
+      role="button"
+      aria-haspopup="true"
     >
-      {Children.map(children, (child) => cloneElement(child, { width, isHovered }))}
+      {Children.map(children, (child) =>
+        cloneElement(child, { width, isHovered })
+      )}
     </motion.div>
   );
 }
 
 function DockLabel({ children, className, ...rest }) {
   const restProps = rest;
-  const isHovered = restProps['isHovered'];
+  const isHovered = restProps["isHovered"];
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = isHovered.on('change', (latest) => {
+    const unsubscribe = isHovered.on("change", (latest) => {
       setIsVisible(latest === 1);
     });
     return () => unsubscribe();
@@ -158,11 +173,11 @@ function DockLabel({ children, className, ...rest }) {
           exit={{ opacity: 0, y: 0 }}
           transition={{ duration: 0.2 }}
           className={cn(
-            'absolute top-full -mt-10 left-1/2 w-fit whitespace-pre rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs text-neutral-700 dark:border-neutral-900 dark:bg-neutral-800 dark:text-white z-40 select-none',
+            "absolute top-full -mt-14 left-1/2 w-fit whitespace-pre rounded-md border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs text-neutral-700 dark:border-neutral-900 dark:bg-neutral-800 dark:text-white z-40 select-none",
             className
           )}
-          role='tooltip'
-          style={{ x: '-40%' }}
+          role="tooltip"
+          style={{ x: "-40%" }}
         >
           {children}
         </motion.div>
@@ -173,13 +188,13 @@ function DockLabel({ children, className, ...rest }) {
 
 function DockIcon({ children, className, ...rest }) {
   const restProps = rest;
-  const width = restProps['width'];
+  const width = restProps["width"];
   const widthTransform = useTransform(width, (val) => val / 2);
 
   return (
     <motion.div
       style={{ width: widthTransform, height: widthTransform }}
-      className={cn('flex items-center justify-center', className)}
+      className={cn("flex items-center justify-center", className)}
     >
       {children}
     </motion.div>

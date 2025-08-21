@@ -95,7 +95,9 @@ export default function App() {
   const handleUndo = () => {
     if (historyRef.current.length > 1) {
       redoRef.current.push(historyRef.current.pop());
-      const prevShapes = JSON.parse(historyRef.current[historyRef.current.length - 1]);
+      const prevShapes = JSON.parse(
+        historyRef.current[historyRef.current.length - 1]
+      );
       broadcastShapes(prevShapes, false);
       setSelectedShapeId(null);
     }
@@ -166,7 +168,10 @@ export default function App() {
       </div>
 
       {/* Fullscreen canvas in background */}
-      <div className="fixed top-0 left-0 w-screen h-screen bg-neutral-100" style={{ zIndex: 0 }}>
+      <div
+        className="fixed top-0 left-0 w-screen h-screen bg-neutral-100"
+        style={{ zIndex: 0 }}
+      >
         <Canvas
           className="w-full h-full"
           tool={tool}
@@ -199,7 +204,9 @@ export default function App() {
               border: "1px solid #aaa",
               padding: "2px 3px",
             }}
-            onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
+            onChange={(e) =>
+              setTextInput({ ...textInput, value: e.target.value })
+            }
             onBlur={() => {
               if (textInput && textInput.value) {
                 const newShape = {
@@ -227,40 +234,7 @@ export default function App() {
             }}
           />
         )}
-        {imageOverlay && (
-          <>
-            <Rnd
-              size={{ width: imageOverlay.width, height: imageOverlay.height }}
-              position={{ x: imageOverlay.x, y: imageOverlay.y }}
-              onDragStop={(e, d) =>
-                setImageOverlay((prev) => ({ ...prev, x: d.x, y: d.y }))
-              }
-              onResizeStop={(e, direction, ref, delta, position) =>
-                setImageOverlay((prev) => ({
-                  ...prev,
-                  width: parseInt(ref.style.width, 10),
-                  height: parseInt(ref.style.height, 10),
-                  ...position,
-                }))
-              }
-              bounds="parent"
-              style={{ zIndex: 10, border: "2px dashed blue", background: "#fff5" }}
-            >
-              <img
-                src={imageOverlay.img.src}
-                alt=""
-                style={{ width: "100%", height: "100%", pointerEvents: "none", userSelect: "none" }}
-              />
-            </Rnd>
-            <button
-              onClick={handlePlaceImage}
-              style={{ position: "absolute", top: 12, right: 12, zIndex: 30 }}
-              className="px-3 py-1 bg-blue-600 text-white rounded"
-            >
-              Place Image
-            </button>
-          </>
-        )}
+
         {selectedShapeId &&
           (() => {
             const shape = shapes.find((s) => s.id === selectedShapeId);
@@ -297,7 +271,10 @@ export default function App() {
                 const dx = nx - x;
                 const dy = ny - y;
                 handleUpdateShape({
-                  points: shape.points.map((pt) => ({ x: pt.x + dx, y: pt.y + dy })),
+                  points: shape.points.map((pt) => ({
+                    x: pt.x + dx,
+                    y: pt.y + dy,
+                  })),
                 });
               } else if (
                 shape.type === "text" ||
@@ -408,6 +385,66 @@ export default function App() {
         >
           Deselect
         </button>
+      )}
+      {imageOverlay && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+            pointerEvents: "none",
+          }}
+        >
+          <Rnd
+            size={{ width: imageOverlay.width, height: imageOverlay.height }}
+            position={{ x: imageOverlay.x, y: imageOverlay.y }}
+            onDragStop={(e, d) =>
+              setImageOverlay((prev) => ({ ...prev, x: d.x, y: d.y }))
+            }
+            onResizeStop={(e, direction, ref, delta, position) =>
+              setImageOverlay((prev) => ({
+                ...prev,
+                width: parseInt(ref.style.width, 10),
+                height: parseInt(ref.style.height, 10),
+                ...position,
+              }))
+            }
+            bounds="parent"
+            style={{
+              zIndex: 51,
+              border: "2px dashed blue",
+              background: "#fff5",
+              pointerEvents: "auto",
+            }}
+          >
+            <img
+              src={imageOverlay.img.src}
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                pointerEvents: "none",
+                userSelect: "none",
+              }}
+            />
+          </Rnd>
+          <button
+            onClick={handlePlaceImage}
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              zIndex: 52,
+              pointerEvents: "auto",
+            }}
+            className="px-3 py-1 bg-blue-600 text-white rounded"
+          >
+            Place Image
+          </button>
+        </div>
       )}
     </>
   );
